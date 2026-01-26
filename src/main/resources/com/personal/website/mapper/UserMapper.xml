@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.personal.website.mapper.UserMapper">
+
+    <resultMap id="UserResultMap" type="com.personal.website.pojo.User">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="email" column="email"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findByUsername" parameterType="string" resultMap="UserResultMap">
+        SELECT * FROM users WHERE username = #{username}
+    </select>
+
+    <insert id="insert" parameterType="com.personal.website.pojo.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (username, password, email, created_at, updated_at)
+        VALUES (#{username}, #{password}, #{email}, NOW(), NOW())
+    </insert>
+</mapper>

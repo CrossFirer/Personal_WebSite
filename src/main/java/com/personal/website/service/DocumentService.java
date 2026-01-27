@@ -11,4 +11,6 @@ public interface DocumentService {
     Document getDocumentByUuid(String uuid);
     boolean updateDocument(Document document);
     boolean deleteDocument(String uuid);
+    
+    List<Document> getDocumentsByType(String type);
 }

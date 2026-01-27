@@ -96,4 +96,15 @@ public class DocumentServiceImpl implements DocumentService {
             session.close();
         }
     }
+    
+    @Override
+    public List<Document> getDocumentsByType(String type) {
+        SqlSession session = MyBatisUtil.getSession();
+        try {
+            DocumentMapper mapper = session.getMapper(DocumentMapper.class);
+            return mapper.selectByType(type);
+        } finally {
+            session.close();
+        }
+    }
 }

@@ -7,11 +7,6 @@
 
     <display-name>Personal Blog</display-name>
 
-    <!-- 默认首页 -->
-    <welcome-file-list>
-        <welcome-file>index.jsp</welcome-file>
-    </welcome-file-list>
-
     <!-- 登录Servlet -->
     <servlet>
         <servlet-name>LoginServlet</servlet-name>
@@ -57,9 +52,9 @@
     </servlet>
     <servlet-mapping>
         <servlet-name>IndexServlet</servlet-name>
+        <url-pattern>/index</url-pattern>
         <url-pattern>/</url-pattern>
     </servlet-mapping>
-
 
     <!-- 自定义字符编码过滤器 -->
     <filter>

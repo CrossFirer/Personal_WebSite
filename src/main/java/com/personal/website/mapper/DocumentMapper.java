@@ -18,4 +18,6 @@ public interface DocumentMapper {
     List<Document> selectAllDocumentsWithPagination(Map<String, Object> params);
     
     int getTotalCount();
+    
+    List<Document> selectByType(String type);
 }

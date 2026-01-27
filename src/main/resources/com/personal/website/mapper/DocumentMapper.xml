@@ -125,4 +125,23 @@
         WHERE status = 1
     </select>
 
+    <!-- 根据类型查询文档 -->
+    <select id="selectByType" parameterType="string" resultMap="DocumentResultMap">
+        SELECT
+            uuid,
+            drafter,
+            draft_time,
+            title,
+            content,
+            type,
+            secondary_category,
+            tertiary_category,
+            status,
+            create_time,
+            update_time
+        FROM documents
+        WHERE status = 1 AND type = #{type}
+        ORDER BY create_time DESC
+    </select>
+
 </mapper>

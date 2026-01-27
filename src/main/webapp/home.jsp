@@ -2,15 +2,14 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-
-
 <%
-    // 检查用户是否已登录
+    // 如果用户没有登录，重定向到登录页面
     if(session.getAttribute("user") == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
     }
 %>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -32,13 +31,13 @@
         .sidebar {
             width: 13%;
             height: 100vh;
-            background-color: #001529;
+            background-color: #f8fafc; /* 改为与页面一致的浅色背景 */
             position: fixed;
             top: 0;
             left: 0;
             z-index: 99;
             border-right: 1px solid #e2e8f0;
-            box-shadow: 0 2px 8px #409eff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* 添加轻微阴影 */
         }
 
         .sidebar-header {
@@ -54,9 +53,7 @@
             gap: 10px;
         }
 
-
-
-        {
+        .sidebar-menu {
             list-style: none;
             padding: 0;
         }
@@ -78,9 +75,9 @@
 
         .sidebar-menu a:hover,
         .sidebar-menu a.active {
-            background-color: #409eff;
-            color: white;
-            border-left-color: #409eff;
+            background-color: #edf2f7; /* 鼠标悬停时的背景色 */
+            color: #2d3748;
+            border-left-color: #409eff; /* 添加左边框高亮 */
         }
 
         /* 固定头部 - 调整右侧内容布局 */
@@ -287,12 +284,20 @@
             font-weight: 600;
             margin-bottom: 8px;
             color: #1a202c;
+            white-space: nowrap;          /* 不换行 */
+            overflow: hidden;             /* 隐藏溢出内容 */
+            text-overflow: ellipsis;      /* 显示省略号 */
+            max-width: 100%;              /* 设置最大宽度 */
         }
 
         .card-desc {
             color: #666;
             font-size: 14px;
             margin-bottom: 6px;
+            white-space: nowrap;          /* 不换行 */
+            overflow: hidden;             /* 隐藏溢出内容 */
+            text-overflow: ellipsis;      /* 显示省略号 */
+            max-width: 100%;              /* 设置最大宽度 */
         }
 
         .card-date {
@@ -346,7 +351,7 @@
             const icon = item.querySelector('.quick-item-icon').textContent;
             if (icon === '📡') { // 起草文件的图标
                 item.addEventListener('click', function() {
-                    window.location.href = '${pageContext.request.contextPath}/jsp/create.jsp';
+                    window.location.href = window.location.origin + '/jsp/create.jsp';
                 });
             }
         });
@@ -356,7 +361,7 @@
 
 <!-- 左侧导航栏 -->
 <div class="sidebar">
-    <div class="sidebar-header" style="color: white">
+    <div class="sidebar-header" style="color: #1a202c">
         <span>🐶</span>
         <div>天地不仁，<p/>以万物为小狗！</div>
     </div>
@@ -395,8 +400,8 @@
     <div class="project-cards">
         <c:forEach items="${documents}" var="document">
             <div class="card" onclick="viewDocument('${document.uuid}')">
-                <div class="card-title">${document.title}</div>
-                <div class="card-desc" title="${document.content}">${fn:substring(document.content, 0, Math.min(document.content.length(), 100))}${document.content.length() > 100 ? '...' : ''}</div>
+                <div class="card-title" title="${document.title}">${document.title}</div>
+                <div class="card-desc" title="${document.content}">${document.content}</div>
                 <div class="card-date">
                         ${document.type} ${document.secondaryCategory} ${document.tertiaryCategory} · ${document.drafter} ·
                     <fmt:formatDate value="${document.createTime}" pattern="yyyy-MM-dd HH:mm:ss" />
@@ -440,11 +445,89 @@
 
 <script>
     function viewDocument(uuid) {
-        window.location.href = '${pageContext.request.contextPath}/document/detail?uuid=' + uuid;
+        window.location.href = window.location.origin + '/document/detail?uuid=' + uuid;
     }
 
     function changePage(page) {
-        window.location.href = '?page=' + page;
+        window.location.href = window.location.origin + '/index?page=' + page;
+    }
+    
+    function loadDocumentsByType(type, event) {
+        // 清空当前内容
+        const cardsContainer = document.querySelector('.project-cards');
+        cardsContainer.innerHTML = '';
+        
+        // 更新导航栏选中状态
+        document.querySelectorAll('.sidebar-menu a').forEach(link => {
+            link.classList.remove('active');
+        });
+        
+        // 确保点击的是链接本身或者找到其父级链接
+        let clickedElement = event.target;
+        while (clickedElement && clickedElement.tagName !== 'A') {
+            clickedElement = clickedElement.parentElement;
+        }
+        if (clickedElement) {
+            clickedElement.classList.add('active');
+        }
+        
+        // 如果是首页，重新加载所有文档
+        if (!type || type.trim() === '') {
+            window.location.href = window.location.origin + '/index';
+            return;
+        }
+        
+        // 发送AJAX请求获取指定类型的数据
+        fetch(`${window.location.origin}${pageContext.request.contextPath}/type/` + encodeURIComponent(type))
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const documents = data.documents;
+                    
+                    // 生成文档卡片
+                    documents.forEach(document => {
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        card.onclick = () => viewDocument(document.uuid);
+                        card.innerHTML = `
+                            <div class="card-title" title="` + document.title + `">` + document.title + `</div>
+                            <div class="card-desc" title="` + document.content + `">` + document.content + `</div>
+                            <div class="card-date">
+                                ` + document.type + ` ` + document.secondaryCategory + ` ` + document.tertiaryCategory + ` · ` + document.drafter + ` ·
+                                ` + formatDate(document.createTime) + `
+                            </div>
+                        `;
+                        cardsContainer.appendChild(card);
+                    });
+                    
+                    // 如果没有找到文档，显示提示信息
+                    if (documents.length === 0) {
+                        const noDataCard = document.createElement('div');
+                        noDataCard.className = 'card';
+                        noDataCard.innerHTML = `<div class="card-title">没有找到` + type + `相关的文档</div>`;
+                        cardsContainer.appendChild(noDataCard);
+                    }
+                } else {
+                    console.error('加载数据失败:', data.message);
+                    alert('加载数据失败: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('请求错误:', error);
+                alert('请求发生错误，请稍后再试');
+            });
+    }
+    
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleString('zh-CN', { 
+            year: 'numeric', 
+            month: '2-digit', 
+            day: '2-digit', 
+            hour: '2-digit', 
+            minute: '2-digit', 
+            second: '2-digit' 
+        }).replace(/\//g, '-');
     }
 </script>
 
@@ -506,7 +589,3 @@
 </div>
 </body>
 </html>
-
-
-
-

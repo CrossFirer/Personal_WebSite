@@ -18,5 +18,7 @@
 
     <mappers>
         <mapper resource="com/personal/website/mapper/UserMapper.xml"/>
+        <mapper resource="com/personal/website/mapper/DocumentMapper.xml"/>
     </mappers>
+
 </configuration>

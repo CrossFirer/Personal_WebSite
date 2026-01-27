@@ -1,4 +1,9 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+
+
 <%
     // 检查用户是否已登录
     if(session.getAttribute("user") == null) {
@@ -331,6 +336,24 @@
     </style>
 </head>
 <body>
+
+<script>
+    // 为"起草文件"项添加点击事件
+    document.addEventListener('DOMContentLoaded', function() {
+        const quickItems = document.querySelectorAll('.quick-item-card');
+
+        quickItems.forEach(item => {
+            const icon = item.querySelector('.quick-item-icon').textContent;
+            if (icon === '📡') { // 起草文件的图标
+                item.addEventListener('click', function() {
+                    window.location.href = '${pageContext.request.contextPath}/jsp/create.jsp';
+                });
+            }
+        });
+    });
+</script>
+
+
 <!-- 左侧导航栏 -->
 <div class="sidebar">
     <div class="sidebar-header" style="color: white">
@@ -338,7 +361,7 @@
         <div>天地不仁，<p/>以万物为小狗！</div>
     </div>
     <ul class="sidebar-menu">
-        <li><a href="#" class="active"><span>🏠</span>我的首页</a></li>
+        <li><a href="#" class="active"><span>🏠</span>首页</a></li>
         <li><a href="#"><span>📝</span>我的随笔</a></li>
         <li><a href="#"><span>🖼️</span>我的图片</a></li>
         <li><a href="#"><span>⭐</span>我的收藏</a></li>
@@ -370,45 +393,60 @@
 <div class="main-content">
     <!-- 项目卡片 -->
     <div class="project-cards">
-        <div class="card">
-            <div class="card-title">外星人来了</div>
-            <div class="card-desc">扯淡呢</div>
-            <div class="card-date">杂谈 外星人 · 2025-01-02</div>
-        </div>
-        <div class="card">
-            <div class="card-title">外星人走了</div>
-            <div class="card-desc">又扯淡呢</div>
-            <div class="card-date">杂谈 外星人 · 2025-02-03</div>
-        </div>
-        <div class="card">
-            <div class="card-title">肯德基回应涨价</div>
-            <div class="card-desc">1月26日起，肯德基对部分外送产品价格做出小幅调整，平均调整金额为0.8元，堂食价格保持不变。</div>
-            <div class="card-date">新闻 肯德基 · 2025-03-04</div>
-        </div>
-        <div class="card">
-            <div class="card-title">死了么”App公司被列入经营异常名录</div>
-            <div class="card-desc">1月23日，记者查询国家企业信用信息公示系统发现，“死了么”App开发商月境（郑州）技术服务有限公司，被郑州市金水区市场监督管理局列入经营异常名录，原因为通过登记的住所或者经营场所无法联系。</div>
-            <div class="card-date">奇闻异事 死了么APP · 2025-04-05</div>
-        </div>
-        <div class="card">
-            <div class="card-title">日本最后两只大熊猫明日返回中国，超31万人抽签送别</div>
-            <div class="card-desc">1月25日，游客在日本东京上野动物园参观大熊猫后伤心地离开。
-
-                据环球网援引日本广播协会（NHK）网站25日报道，上野动物园当天参观者仅限于提前抽签抽中者，预计约有4400名中签者前来参观。据悉，从1月14日至25日，共有超过31万人参与提前抽签，其中25日当天的申请人数与中签人数之比最高，达到24.6：1。</div>
-            <div class="card-date">新闻 大熊猫 · 2025-05-06</div>
-        </div>
+        <c:forEach items="${documents}" var="document">
+            <div class="card" onclick="viewDocument('${document.uuid}')">
+                <div class="card-title">${document.title}</div>
+                <div class="card-desc" title="${document.content}">${fn:substring(document.content, 0, Math.min(document.content.length(), 100))}${document.content.length() > 100 ? '...' : ''}</div>
+                <div class="card-date">
+                        ${document.type} ${document.secondaryCategory} ${document.tertiaryCategory} · ${document.drafter} ·
+                    <fmt:formatDate value="${document.createTime}" pattern="yyyy-MM-dd HH:mm:ss" />
+                </div>
+            </div>
+        </c:forEach>
 
         <!-- 分页组件 -->
         <div class="pagination">
-            <button class="pagination-btn disabled">上一页</button>
-            <button class="pagination-btn active">1</button>
-            <button class="pagination-btn">2</button>
-            <button class="pagination-btn">3</button>
-            <button class="pagination-btn">4</button>
-            <button class="pagination-btn">5</button>
-            <button class="pagination-btn">下一页</button>
+            <c:choose>
+                <c:when test="${currentPage <= 1}">
+                    <button class="pagination-btn disabled">上一页</button>
+                </c:when>
+                <c:otherwise>
+                    <button class="pagination-btn" onclick="changePage(${currentPage - 1})">上一页</button>
+                </c:otherwise>
+            </c:choose>
+
+            <c:forEach begin="1" end="${totalPages}" var="i">
+                <c:choose>
+                    <c:when test="${i == currentPage}">
+                        <button class="pagination-btn active">${i}</button>
+                    </c:when>
+                    <c:otherwise>
+                        <button class="pagination-btn" onclick="changePage(${i})">${i}</button>
+                    </c:otherwise>
+                </c:choose>
+            </c:forEach>
+
+            <c:choose>
+                <c:when test="${currentPage >= totalPages}">
+                    <button class="pagination-btn disabled">下一页</button>
+                </c:when>
+                <c:otherwise>
+                    <button class="pagination-btn" onclick="changePage(${currentPage + 1})">下一页</button>
+                </c:otherwise>
+            </c:choose>
         </div>
     </div>
+</div>
+
+<script>
+    function viewDocument(uuid) {
+        window.location.href = '${pageContext.request.contextPath}/document/detail?uuid=' + uuid;
+    }
+
+    function changePage(page) {
+        window.location.href = '?page=' + page;
+    }
+</script>
 
     <!-- 右侧面板 -->
     <div class="right-panel">
@@ -436,7 +474,7 @@
             </div>
             <div class="quick-item-card">
                 <div class="quick-item-icon">📡</div>
-                <div class="quick-item-text">IoT 物联网</div>
+                <div class="quick-item-text">起草文件</div>
             </div>
         </div>
 

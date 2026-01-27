@@ -20,13 +20,7 @@ public class IndexServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // 检查用户是否已登录
-        HttpSession session = request.getSession(false); // 注意这里使用false，不自动创建session
-        if(session == null || session.getAttribute("user") == null) {
-            // 强制重定向到登录页面
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
+        // 不再强制要求登录，任何人都可以访问主页
         
         // 获取分页参数
         int page = 1;

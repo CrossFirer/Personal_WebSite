@@ -2,18 +2,11 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
-<%
-    // 如果用户没有登录，重定向到登录页面
-    if(session.getAttribute("user") == null) {
-        response.sendRedirect(request.getContextPath() + "/login");
-        return;
-    }
-%>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>野猪佩奇</title>
+    <title>个人网站</title>
     <style>
         * {
             margin: 0;
@@ -391,7 +384,9 @@
         <li><a href="#" onclick="loadDocumentsByType('我的宝贝', event)"><span>💎</span>我的宝贝</a></li>
         <li><a href="#" onclick="loadDocumentsByType('留言板', event)"><span>💬</span>留言板</a></li>
         <li><a href="#" onclick="loadDocumentsByType('联系我', event)"><span>📧</span>联系我?</a></li>
-        <li><a href="#" onclick="loadDocumentsByDrafter(event)"><span>📤</span>我的发布</a></li>
+        <c:if test="${sessionScope.user.username ne null}">
+            <li><a href="#" onclick="loadDocumentsByDrafter(event)"><span>📤</span>我的发布</a></li>
+        </c:if>
     </ul>
 </div>
 
@@ -400,7 +395,14 @@
     <div class="header-left">
         <div class="user-info">
             <div class="avatar">Y</div>
-            <span>你好 ${sessionScope.user.username} 祝你开心每一天!</span>
+            <c:choose>
+                <c:when test="${sessionScope.user.username ne null}">
+                    <span>你好 ${sessionScope.user.username} 祝你开心每一天!</span>
+                </c:when>
+                <c:otherwise>
+                    <span><a href="${pageContext.request.contextPath}/login" style="color: #409eff;">请登录</a> 或 <a href="${pageContext.request.contextPath}/register" style="color: #409eff;">注册</a> 后起草文件</span>
+                </c:otherwise>
+            </c:choose>
         </div>
     </div>
 
@@ -800,36 +802,22 @@
                 <div class="quick-item-icon">🤝</div>
                 <div class="quick-item-text">CRM 系统</div>
             </div>
-            <div class="quick-item-card">
-                <div class="quick-item-icon">📡</div>
-                <div class="quick-item-text">起草文件</div>
-            </div>
+            <c:choose>
+                <c:when test="${sessionScope.user.username ne null}">
+                    <div class="quick-item-card" onclick="window.location.href='${pageContext.request.contextPath}/document/form'">
+                        <div class="quick-item-icon">📡</div>
+                        <div class="quick-item-text">起草文件</div>
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <div class="quick-item-card" onclick="window.location.href='${pageContext.request.contextPath}/login'">
+                        <div class="quick-item-icon">📡</div>
+                        <div class="quick-item-text">登录起草</div>
+                    </div>
+                </c:otherwise>
+            </c:choose>
         </div>
 
-        <div class="section-title">通知公告</div>
-        <div class="notifications">
-            <div class="notification-item">
-                <div class="notification-avatar">ℹ️</div>
-                <div class="notification-content">
-                    <div class="notification-title">技术兼容性：系统支持 JDK 8/17/21，Vue 2/3</div>
-                    <div class="notification-date">2026-01-26</div>
-                </div>
-            </div>
-            <div class="notification-item">
-                <div class="notification-avatar">⚙️</div>
-                <div class="notification-content">
-                    <div class="notification-title">架构灵活性：后端提供 Spring Boot 2.7/3.2 + Cloud 双架构</div>
-                    <div class="notification-date">2026-01-26</div>
-                </div>
-            </div>
-            <div class="notification-item">
-                <div class="notification-avatar">✅</div>
-                <div class="notification-content">
-                    <div class="notification-title">开源免授权：全部开源，个人与企业可 100% 直接使用，无需授权</div>
-                    <div class="notification-date">2026-01-26</div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 </body>

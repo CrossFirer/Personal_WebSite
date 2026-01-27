@@ -2,7 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%
-    // 检查用户是否已登录
+    // 检查用户是否已登录，如果没有则重定向到登录页面
     if(session.getAttribute("user") == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
@@ -20,7 +20,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>${document ne null ? "修改文件" : "起草文件"}</title>
+    <title>${document ne null ? "编辑文件" : "起草文件"}</title>
     <style>
         body {
             font-family: 'Microsoft YaHei', sans-serif;

@@ -144,4 +144,23 @@
         ORDER BY create_time DESC
     </select>
 
+    <!-- 根据起草人查询文档 -->
+    <select id="selectByDrafter" parameterType="string" resultMap="DocumentResultMap">
+        SELECT
+            uuid,
+            drafter,
+            draft_time,
+            title,
+            content,
+            type,
+            secondary_category,
+            tertiary_category,
+            status,
+            create_time,
+            update_time
+        FROM documents
+        WHERE status = 1 AND drafter = #{drafter}
+        ORDER BY create_time DESC
+    </select>
+
 </mapper>

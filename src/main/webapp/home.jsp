@@ -304,6 +304,24 @@
             color: #999;
             font-size: 12px;
         }
+        
+        /* 为文档卡片添加的操作按钮样式 */
+        .actions {
+            float: right;
+        }
+        
+        .edit-btn, .delete-btn {
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            margin-left: 8px;
+            padding: 2px;
+        }
+        
+        .edit-btn:hover, .delete-btn:hover {
+            opacity: 0.7;
+        }
 
         /* 分页样式 */
         .pagination {
@@ -366,13 +384,14 @@
         <div>天地不仁，<p/>以万物为小狗！</div>
     </div>
     <ul class="sidebar-menu">
-        <li><a href="#" class="active"><span>🏠</span>首页</a></li>
-        <li><a href="#"><span>📝</span>我的随笔</a></li>
-        <li><a href="#"><span>🖼️</span>我的图片</a></li>
-        <li><a href="#"><span>⭐</span>我的收藏</a></li>
-        <li><a href="#"><span>💎</span>我的宝贝</a></li>
-        <li><a href="#"><span>💬</span>留言板</a></li>
-        <li><a href="#"><span>📧</span>联系我?</a></li>
+        <li><a href="#" onclick="loadDocumentsByType('', event)" class="active"><span>🏠</span>首页</a></li>
+        <li><a href="#" onclick="loadDocumentsByType('我的随笔', event)"><span>📝</span>我的随笔</a></li>
+        <li><a href="#" onclick="loadDocumentsByType('我的图片', event)"><span>🖼️</span>我的图片</a></li>
+        <li><a href="#" onclick="loadDocumentsByType('我的收藏', event)"><span>⭐</span>我的收藏</a></li>
+        <li><a href="#" onclick="loadDocumentsByType('我的宝贝', event)"><span>💎</span>我的宝贝</a></li>
+        <li><a href="#" onclick="loadDocumentsByType('留言板', event)"><span>💬</span>留言板</a></li>
+        <li><a href="#" onclick="loadDocumentsByType('联系我', event)"><span>📧</span>联系我?</a></li>
+        <li><a href="#" onclick="loadDocumentsByDrafter(event)"><span>📤</span>我的发布</a></li>
     </ul>
 </div>
 
@@ -381,7 +400,7 @@
     <div class="header-left">
         <div class="user-info">
             <div class="avatar">Y</div>
-            <span>你好 野猪佩奇 祝你开心每一天!</span>
+            <span>你好 ${sessionScope.user.username} 祝你开心每一天!</span>
         </div>
     </div>
 
@@ -445,7 +464,7 @@
 
 <script>
     function viewDocument(uuid) {
-        window.location.href = window.location.origin + '/document/detail?uuid=' + uuid;
+        window.location.href = window.location.origin + '/document/view?uuid=' + uuid;
     }
 
     function changePage(page) {
@@ -453,6 +472,11 @@
     }
     
     function loadDocumentsByType(type, event) {
+        // 阻止默认的链接跳转行为
+        if(event) {
+            event.preventDefault();
+        }
+        
         // 清空当前内容
         const cardsContainer = document.querySelector('.project-cards');
         cardsContainer.innerHTML = '';
@@ -463,7 +487,7 @@
         });
         
         // 确保点击的是链接本身或者找到其父级链接
-        let clickedElement = event.target;
+        let clickedElement = event ? event.target : null;
         while (clickedElement && clickedElement.tagName !== 'A') {
             clickedElement = clickedElement.parentElement;
         }
@@ -479,24 +503,81 @@
         
         // 发送AJAX请求获取指定类型的数据
         fetch(`${window.location.origin}${pageContext.request.contextPath}/type/` + encodeURIComponent(type))
-            .then(response => response.json())
+            .then(response => {
+                // 检查响应状态
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
-                    const documents = data.documents;
+                    const documents = data.documents || [];
+                    
+                    // 清空现有内容
+                    cardsContainer.innerHTML = '';
                     
                     // 生成文档卡片
-                    documents.forEach(document => {
+                    documents.forEach(doc => {  // 将参数名从document改为doc，避免与全局document对象混淆
                         const card = document.createElement('div');
                         card.className = 'card';
-                        card.onclick = () => viewDocument(document.uuid);
-                        card.innerHTML = `
-                            <div class="card-title" title="` + document.title + `">` + document.title + `</div>
-                            <div class="card-desc" title="` + document.content + `">` + document.content + `</div>
-                            <div class="card-date">
-                                ` + document.type + ` ` + document.secondaryCategory + ` ` + document.tertiaryCategory + ` · ` + document.drafter + ` ·
-                                ` + formatDate(document.createTime) + `
-                            </div>
-                        `;
+                        
+                        // 使用箭头函数并正确传递uuid
+                        card.onclick = () => viewDocument(doc.uuid);
+                        
+                        // 创建卡片元素
+                        const titleDiv = document.createElement('div');
+                        titleDiv.className = 'card-title';
+                        titleDiv.title = doc.title || '';
+                        titleDiv.textContent = doc.title || '';
+                        
+                        const descDiv = document.createElement('div');
+                        descDiv.className = 'card-desc';
+                        descDiv.title = doc.content || '';
+                        descDiv.textContent = doc.content || '';
+                        
+                        const dateDiv = document.createElement('div');
+                        dateDiv.className = 'card-date';
+                        
+                        // 安全地访问对象属性并格式化日期
+                        const docType = doc.type || '';
+                        const secondaryCat = doc.secondaryCategory || '';
+                        const tertiaryCat = doc.tertiaryCategory || '';
+                        const drafter = doc.drafter || '';
+                        const createTime = doc.createTime;
+                        
+                        let formattedDate = '';
+                        if (createTime) {
+                            // 如果是ISO格式的日期字符串或Date对象，直接格式化
+                            if (typeof createTime === 'string') {
+                                try {
+                                    // 尝试解析Java Date.toString()格式的日期
+                                    const date = new Date(createTime);
+                                    if (!isNaN(date.getTime())) {
+                                        formattedDate = formatDate(date);
+                                    } else {
+                                        formattedDate = createTime; // 如果解析失败，使用原始值
+                                    }
+                                } catch (e) {
+                                    formattedDate = createTime; // 使用原始值
+                                }
+                            } else if (createTime instanceof Date) {
+                                formattedDate = formatDate(createTime);
+                            } else {
+                                formattedDate = String(createTime);
+                            }
+                        }
+                        
+                        dateDiv.textContent = 
+                            (docType ? docType + ' ' : '') + 
+                            (secondaryCat ? secondaryCat + ' ' : '') + 
+                            (tertiaryCat ? tertiaryCat + ' ' : '') + 
+                            '· ' + drafter + ' · ' + formattedDate;
+                        
+                        card.appendChild(titleDiv);
+                        card.appendChild(descDiv);
+                        card.appendChild(dateDiv);
+                        
                         cardsContainer.appendChild(card);
                     });
                     
@@ -504,17 +585,145 @@
                     if (documents.length === 0) {
                         const noDataCard = document.createElement('div');
                         noDataCard.className = 'card';
-                        noDataCard.innerHTML = `<div class="card-title">没有找到` + type + `相关的文档</div>`;
+                        noDataCard.innerHTML = '<div class="card-title">没有找到' + type + '相关的文档</div>';
                         cardsContainer.appendChild(noDataCard);
                     }
                 } else {
-                    console.error('加载数据失败:', data.message);
-                    alert('加载数据失败: ' + data.message);
+                    console.error('加载数据失败:', data.message || '未知错误');
+                    alert('加载数据失败: ' + (data.message || '未知错误'));
                 }
             })
             .catch(error => {
-                console.error('请求错误:', error);
-                alert('请求发生错误，请稍后再试');
+                console.error('请求错误详情:', error);
+                alert('请求发生错误，请稍后再试。错误详情: ' + error.message);
+            });
+    }
+    
+    function loadDocumentsByDrafter(event) {
+        // 阻止默认的链接跳转行为
+        if(event) {
+            event.preventDefault();
+        }
+        
+        // 清空当前内容
+        const cardsContainer = document.querySelector('.project-cards');
+        cardsContainer.innerHTML = '';
+        
+        // 更新导航栏选中状态
+        document.querySelectorAll('.sidebar-menu a').forEach(link => {
+            link.classList.remove('active');
+        });
+        
+        // 确保点击的是链接本身或者找到其父级链接
+        let clickedElement = event ? event.target : null;
+        while (clickedElement && clickedElement.tagName !== 'A') {
+            clickedElement = clickedElement.parentElement;
+        }
+        if (clickedElement) {
+            clickedElement.classList.add('active');
+        }
+        
+        // 发送AJAX请求获取当前用户起草的文档
+        fetch(`${window.location.origin}${pageContext.request.contextPath}/drafter/documents`)
+            .then(response => {
+                // 检查响应状态
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    const documents = data.documents || [];
+                    
+                    // 清空现有内容
+                    cardsContainer.innerHTML = '';
+                    
+                    // 生成文档卡片
+                    documents.forEach(doc => {
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        
+                        // 使用箭头函数并正确传递uuid
+                        card.onclick = () => viewDocument(doc.uuid);
+                        
+                        // 创建卡片元素
+                        const titleDiv = document.createElement('div');
+                        titleDiv.className = 'card-title';
+                        // 限制标题长度，添加省略号
+                        const shortTitle = (doc.title && doc.title.length > 50) ? doc.title.substring(0, 50) + '...' : doc.title || '';
+                        titleDiv.title = doc.title || '';
+                        titleDiv.innerHTML = shortTitle + ' ' + 
+                            '<span class="actions">' +
+                            '<button class="edit-btn" onclick="editDocument(\'' + doc.uuid + '\', event)">✏️</button>' +
+                            '<button class="delete-btn" onclick="deleteDocument(\'' + doc.uuid + '\', event)">🗑️</button>' +
+                            '</span>';
+                        
+                        const descDiv = document.createElement('div');
+                        descDiv.className = 'card-desc';
+                        descDiv.title = doc.content || '';
+                        descDiv.textContent = doc.content || '';
+                        
+                        const dateDiv = document.createElement('div');
+                        dateDiv.className = 'card-date';
+                        
+                        // 安全地访问对象属性并格式化日期
+                        const docType = doc.type || '';
+                        const secondaryCat = doc.secondaryCategory || '';
+                        const tertiaryCat = doc.tertiaryCategory || '';
+                        const drafter = doc.drafter || '';
+                        const createTime = doc.createTime;
+                        
+                        let formattedDate = '';
+                        if (createTime) {
+                            // 如果是ISO格式的日期字符串或Date对象，直接格式化
+                            if (typeof createTime === 'string') {
+                                try {
+                                    // 尝试解析Java Date.toString()格式的日期
+                                    const date = new Date(createTime);
+                                    if (!isNaN(date.getTime())) {
+                                        formattedDate = formatDate(date);
+                                    } else {
+                                        formattedDate = createTime; // 如果解析失败，使用原始值
+                                    }
+                                } catch (e) {
+                                    formattedDate = createTime; // 使用原始值
+                                }
+                            } else if (createTime instanceof Date) {
+                                formattedDate = formatDate(createTime);
+                            } else {
+                                formattedDate = String(createTime);
+                            }
+                        }
+                        
+                        dateDiv.textContent = 
+                            (docType ? docType + ' ' : '') + 
+                            (secondaryCat ? secondaryCat + ' ' : '') + 
+                            (tertiaryCat ? tertiaryCat + ' ' : '') + 
+                            '· ' + drafter + ' · ' + formattedDate;
+                        
+                        card.appendChild(titleDiv);
+                        card.appendChild(descDiv);
+                        card.appendChild(dateDiv);
+                        
+                        cardsContainer.appendChild(card);
+                    });
+                    
+                    // 如果没有找到文档，显示提示信息
+                    if (documents.length === 0) {
+                        const noDataCard = document.createElement('div');
+                        noDataCard.className = 'card';
+                        noDataCard.innerHTML = '<div class="card-title">您还没有发布任何文档</div>';
+                        cardsContainer.appendChild(noDataCard);
+                    }
+                } else {
+                    console.error('加载数据失败:', data.message || '未知错误');
+                    alert('加载数据失败: ' + (data.message || '未知错误'));
+                }
+            })
+            .catch(error => {
+                console.error('请求错误详情:', error);
+                alert('请求发生错误，请稍后再试。错误详情: ' + error.message);
             });
     }
     
@@ -528,6 +737,42 @@
             minute: '2-digit', 
             second: '2-digit' 
         }).replace(/\//g, '-');
+    }
+    
+    function editDocument(uuid, event) {
+        // 阻止冒泡，避免触发卡片点击事件
+        event.stopPropagation();
+        // 跳转到创建页面并传递UUID进行编辑
+        window.location.href = '${pageContext.request.contextPath}/document/form?uuid=' + uuid;
+    }
+    
+    function deleteDocument(uuid, event) {
+        // 阻止冒泡，避免触发卡片点击事件
+        event.stopPropagation();
+        
+        if (confirm('确定要删除这篇文档吗？')) {
+            fetch('${pageContext.request.contextPath}/document/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'uuid=' + encodeURIComponent(uuid)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('删除成功');
+                    // 重新加载当前页面的数据
+                    loadDocumentsByDrafter(null);
+                } else {
+                    alert('删除失败: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('删除错误:', error);
+                alert('删除时发生错误，请稍后再试');
+            });
+        }
     }
 </script>
 

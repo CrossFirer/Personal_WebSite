@@ -20,4 +20,6 @@ public interface DocumentMapper {
     int getTotalCount();
     
     List<Document> selectByType(String type);
+    
+    List<Document> selectByDrafter(String drafter);
 }

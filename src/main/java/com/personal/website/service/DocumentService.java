@@ -13,4 +13,6 @@ public interface DocumentService {
     boolean deleteDocument(String uuid);
     
     List<Document> getDocumentsByType(String type);
+    
+    List<Document> getDocumentsByDrafter(String drafter);
 }

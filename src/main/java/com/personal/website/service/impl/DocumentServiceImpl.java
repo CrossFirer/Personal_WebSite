@@ -107,4 +107,15 @@ public class DocumentServiceImpl implements DocumentService {
             session.close();
         }
     }
+    
+    @Override
+    public List<Document> getDocumentsByDrafter(String drafter) {
+        SqlSession session = MyBatisUtil.getSession();
+        try {
+            DocumentMapper mapper = session.getMapper(DocumentMapper.class);
+            return mapper.selectByDrafter(drafter);
+        } finally {
+            session.close();
+        }
+    }
 }

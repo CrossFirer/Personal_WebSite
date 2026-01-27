@@ -12,6 +12,9 @@ public class MyBatisUtil {
     private static SqlSessionFactory sqlSessionFactory;
 
     static {
+        // 设置系统属性确保字符编码
+        System.setProperty("file.encoding", "UTF-8");
+        
         try {
             String resource = "mybatis-config.xml";
             InputStream inputStream = Resources.getResourceAsStream(resource);
@@ -25,4 +28,3 @@ public class MyBatisUtil {
         return sqlSessionFactory.openSession();
     }
 }
-

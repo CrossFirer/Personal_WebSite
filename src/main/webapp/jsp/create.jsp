@@ -1,16 +1,26 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%
     // 检查用户是否已登录
     if(session.getAttribute("user") == null) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
     }
+    
+    // 调试输出，检查document对象是否存在
+    Object documentObj = request.getAttribute("document");
+    System.out.println("create.jsp: document object is " + (documentObj != null ? "present" : "null"));
+    
+    // 输出URL参数信息，用于调试
+    String uuidParam = request.getParameter("uuid");
+    System.out.println("create.jsp: uuid parameter is " + uuidParam);
 %>
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>起草文件</title>
+    <title>${document ne null ? "修改文件" : "起草文件"}</title>
     <style>
         body {
             font-family: 'Microsoft YaHei', sans-serif;
@@ -79,8 +89,9 @@
 </head>
 <body>
 <div class="container">
-    <h2>起草文件</h2>
+    <h2>${document ne null ? "编辑文件" : "起草文件"}</h2>
     <form id="documentForm" action="${pageContext.request.contextPath}/document/save" method="post">
+        <input type="hidden" id="uuid" name="uuid" value="${document ne null ? document.uuid : ''}">
         <div class="form-row">
             <div class="form-col">
                 <div class="form-group">
@@ -91,14 +102,25 @@
             <div class="form-col">
                 <div class="form-group">
                     <label for="draftTime">起草时间:</label>
-                    <input type="text" id="draftTime" name="draftTime" value="<%=new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date())%>" readonly class="readonly-field">
+                    <c:choose>
+                        <c:when test="${document ne null}">
+                            <input type="text" id="draftTime" name="draftTime" 
+                                   value="<fmt:formatDate value='${document.createTime}' pattern='yyyy-MM-dd HH:mm:ss'/>" 
+                                   readonly class="readonly-field">
+                        </c:when>
+                        <c:otherwise>
+                            <input type="text" id="draftTime" name="draftTime" 
+                                   value="<%= new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new java.util.Date()) %>" 
+                                   readonly class="readonly-field">
+                        </c:otherwise>
+                    </c:choose>
                 </div>
             </div>
         </div>
 
         <div class="form-group">
             <label for="title">标题:</label>
-            <input type="text" id="title" name="title" required>
+            <input type="text" id="title" name="title" value="${document ne null ? document.title : ''}" required>
         </div>
 
         <div class="form-row">
@@ -107,10 +129,10 @@
                     <label for="type">类型:</label>
                     <select id="type" name="type" required>
                         <option value="">请选择类型</option>
-                        <option value="我的随笔">我的随笔</option>
-                        <option value="我的图片">我的图片</option>
-                        <option value="我的收藏">我的收藏</option>
-                        <option value="我的宝贝">我的宝贝</option>
+                        <option value="我的随笔" ${document ne null && document.type == '我的随笔' ? 'selected' : ''}>我的随笔</option>
+                        <option value="我的图片" ${document ne null && document.type == '我的图片' ? 'selected' : ''}>我的图片</option>
+                        <option value="我的收藏" ${document ne null && document.type == '我的收藏' ? 'selected' : ''}>我的收藏</option>
+                        <option value="我的宝贝" ${document ne null && document.type == '我的宝贝' ? 'selected' : ''}>我的宝贝</option>
                     </select>
                 </div>
             </div>
@@ -119,10 +141,10 @@
                     <label for="secondaryCategory">二级分类:</label>
                     <select id="secondaryCategory" name="secondaryCategory" required>
                         <option value="">请选择二级分类</option>
-                        <option value="杂谈">杂谈</option>
-                        <option value="奇闻异事">奇闻异事</option>
-                        <option value="新闻">新闻</option>
-                        <option value="焦点">焦点</option>
+                        <option value="杂谈" ${document ne null && document.secondaryCategory == '杂谈' ? 'selected' : ''}>杂谈</option>
+                        <option value="奇闻异事" ${document ne null && document.secondaryCategory == '奇闻异事' ? 'selected' : ''}>奇闻异事</option>
+                        <option value="新闻" ${document ne null && document.secondaryCategory == '新闻' ? 'selected' : ''}>新闻</option>
+                        <option value="焦点" ${document ne null && document.secondaryCategory == '焦点' ? 'selected' : ''}>焦点</option>
                     </select>
                 </div>
             </div>
@@ -132,20 +154,20 @@
             <label for="tertiaryCategory">三级分类:</label>
             <select id="tertiaryCategory" name="tertiaryCategory" required>
                 <option value="">请选择三级分类</option>
-                <option value="新闻">新闻</option>
-                <option value="焦点">焦点</option>
-                <option value="评论">评论</option>
-                <option value="分析">分析</option>
+                <option value="新闻" ${document ne null && document.tertiaryCategory == '新闻' ? 'selected' : ''}>新闻</option>
+                <option value="焦点" ${document ne null && document.tertiaryCategory == '焦点' ? 'selected' : ''}>焦点</option>
+                <option value="评论" ${document ne null && document.tertiaryCategory == '评论' ? 'selected' : ''}>评论</option>
+                <option value="分析" ${document ne null && document.tertiaryCategory == '分析' ? 'selected' : ''}>分析</option>
             </select>
         </div>
 
         <div class="form-group">
             <label for="content">内容:</label>
-            <textarea id="content" name="content" placeholder="请输入内容..." required></textarea>
+            <textarea id="content" name="content" placeholder="请输入内容..." required>${document ne null ? document.content : ''}</textarea>
         </div>
 
         <div class="form-group">
-            <button type="submit" class="btn">保存</button>
+            <button type="submit" class="btn">${document ne null ? "更新" : "保存"}</button>
             <button type="button" class="btn btn-back" onclick="history.back()">返回</button>
         </div>
     </form>

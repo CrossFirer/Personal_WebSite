@@ -137,6 +137,32 @@
             font-size: 14px;
         }
 
+        .music-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .music-controls button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+            padding: 2px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+        
+        .music-controls button:hover {
+            color: #409eff;
+            background-color: #f5f5f5;
+        }
+        
         /* 主内容区 */
         .main-content {
             margin-top: 32px;
@@ -400,7 +426,7 @@
                     <span>你好 ${sessionScope.user.username} 祝你开心每一天!</span>
                 </c:when>
                 <c:otherwise>
-                    <span><a href="${pageContext.request.contextPath}/login" style="color: #409eff;">请登录</a> 或 <a href="${pageContext.request.contextPath}/register" style="color: #409eff;">注册</a> 后起草文件</span>
+                    <span><a href="${pageContext.request.contextPath}/login" style="color: #409eff;">请登录</a> 或 <a href="${pageContext.request.contextPath}/register" style="color: #409eff;">注册</a> 后发布文章</span>
                 </c:otherwise>
             </c:choose>
         </div>
@@ -408,10 +434,21 @@
 
     <div class="header-right">
         <div class="music-player">
-            <span>🎵</span>
-            <span>背景音乐</span>
+            <span id="musicToggle" title="点击播放/暂停">🎵</span>
+            <span id="musicStatus">奢香夫人</span>
+            <div class="music-controls">
+                <button id="prevBtn" title="上一首" disabled>⏮</button>
+                <button id="playPauseBtn" title="播放/暂停">▶</button>
+                <button id="nextBtn" title="下一首" disabled>⏭</button>
+            </div>
+            <audio id="backgroundMusic" preload="auto" style="display: none;">
+                <source id="musicSource" src="${pageContext.request.contextPath}/music/奢香夫人.mp3" type="audio/mpeg">
+                您的浏览器不支持音频播放
+            </audio>
         </div>
-        <div class="weather-info">今日晴，20°C - 32°C!</div>
+        <div class="weather-info">
+            天气信息加载中...
+        </div>
     </div>
 </div>
 
@@ -776,6 +813,191 @@
             });
         }
     }
+    
+    // 页面加载完成后获取天气信息
+    document.addEventListener('DOMContentLoaded', function() {
+        updateWeatherInfo();
+        // 每10分钟更新一次天气信息
+        setInterval(updateWeatherInfo, 600000); 
+        
+        // 初始化背景音乐播放器
+        initMusicPlayer();
+    });
+    
+    function initMusicPlayer() {
+        const audio = document.getElementById('backgroundMusic');
+        const musicSource = document.getElementById('musicSource');
+        const musicToggle = document.getElementById('musicToggle');
+        const musicStatus = document.getElementById('musicStatus');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        
+        // 尝试多种可能的路径
+        const musicPath = `${pageContext.request.contextPath}/music/%E5%A5%A2%E9%A6%99%E5%A4%AB%E4%BA%BA.mp3`; // URL编码后的路径
+        
+        // 更新音乐信息显示
+        function updateMusicDisplay() {
+            musicStatus.textContent = "奢香夫人";
+        }
+        
+        // 预加载音频文件
+        function preloadAudio() {
+            // 创建一个临时的XMLHttpRequest来检测文件是否存在
+            const xhr = new XMLHttpRequest();
+            xhr.open('HEAD', musicPath, true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        console.log("音频文件存在，状态码:", xhr.status);
+                        // 文件存在，设置音频源
+                        musicSource.src = musicPath;
+                        audio.load();
+                        updateMusicDisplay();
+                    } else {
+                        console.error("音频文件不存在，状态码:", xhr.status);
+                        musicStatus.textContent = `音频文件未找到 (状态: ${xhr.status})，路径: ${musicPath}`;
+                        // 尝试其他可能的路径
+                        fallbackToAlternativePaths();
+                    }
+                }
+            };
+            xhr.send();
+        }
+        
+        // 备用路径尝试
+        function fallbackToAlternativePaths() {
+            const alternativePaths = [
+                `${pageContext.request.contextPath}/music/奢香夫人.mp3`,
+                `music/奢香夫人.mp3`,
+                `/music/奢香夫人.mp3`
+            ];
+            
+            let attempt = 0;
+            function tryPath() {
+                if (attempt >= alternativePaths.length) {
+                    musicStatus.textContent = "所有音频路径都不可用，请检查服务器配置和文件位置";
+                    return;
+                }
+                
+                const path = alternativePaths[attempt];
+                console.log("尝试备用路径:", path);
+                
+                const xhr = new XMLHttpRequest();
+                xhr.open('HEAD', path, true);
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            console.log("找到音频文件在路径:", path);
+                            musicSource.src = path;
+                            audio.load();
+                            updateMusicDisplay();
+                        } else {
+                            console.log(`路径 ${path} 不存在，状态码: ${xhr.status}`);
+                            attempt++;
+                            tryPath();
+                        }
+                    }
+                };
+                xhr.send();
+            }
+            
+            tryPath();
+        }
+        
+        // 播放/暂停功能
+        function togglePlayPause() {
+            // 确保音频已加载
+            if (audio.readyState >= 1) { // HAVE_METADATA
+                if (audio.paused) {
+                    audio.play()
+                        .then(() => {
+                            playPauseBtn.textContent = '⏸'; // 暂停图标
+                            musicStatus.textContent = "奢香夫人 (播放中...)";
+                        })
+                        .catch(e => {
+                            console.error('播放失败:', e);
+                            musicStatus.textContent = `播放失败: ${e.name} - ${e.message}`;
+                            
+                            // 如果是自动播放策略错误，提示用户交互
+                            if (e.name === 'NotAllowedError') {
+                                musicStatus.textContent = "请先与页面交互再播放音乐";
+                            }
+                        });
+                } else {
+                    audio.pause();
+                    playPauseBtn.textContent = '▶'; // 播放图标
+                    musicStatus.textContent = "奢香夫人 (已暂停)";
+                }
+            } else {
+                musicStatus.textContent = "音频尚未加载，请稍候...";
+            }
+        }
+        
+        // 监听音频播放事件
+        audio.addEventListener('play', function() {
+            playPauseBtn.textContent = '⏸';
+            musicStatus.textContent = "奢香夫人 (播放中...)";
+        });
+        
+        // 监听音频暂停事件
+        audio.addEventListener('pause', function() {
+            playPauseBtn.textContent = '▶';
+            musicStatus.textContent = "奢香夫人 (已暂停)";
+        });
+        
+        // 监听音频结束事件
+        audio.addEventListener('ended', function() {
+            playPauseBtn.textContent = '▶';
+            musicStatus.textContent = "奢香夫人 (播放完毕)";
+        });
+        
+        // 监听加载错误事件
+        audio.addEventListener('error', function(e) {
+            console.error('音频加载错误:', e.target.error);
+            musicStatus.textContent = `音频加载失败: ${e.target.error}`;
+        });
+        
+        // 绑定按钮事件
+        playPauseBtn.addEventListener('click', togglePlayPause);
+        musicToggle.addEventListener('click', togglePlayPause);
+        
+        prevBtn.addEventListener('click', function() {
+            // 目前只有一首歌，禁用此功能
+        });
+        
+        nextBtn.addEventListener('click', function() {
+            // 目前只有一首歌，禁用此功能
+        });
+        
+        // 页面加载后开始预加载音频
+        preloadAudio();
+        
+        console.log('音乐播放器初始化完成，尝试路径:', musicPath);
+    }
+    
+    function updateWeatherInfo() {
+        fetch('${pageContext.request.contextPath}/weather?city=cangzhou')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('网络响应不正常: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    const weatherInfo = data.weather;
+                    document.querySelector('.weather-info').textContent = '📍 ' + weatherInfo.cityName + ' ' + weatherInfo.condition + ', ' + weatherInfo.currentTemp;
+                } else {
+                    console.error('获取天气信息失败:', data.message || '未知错误');
+                }
+            })
+            .catch(error => {
+                console.error('请求天气信息时发生错误:', error);
+                // 如果API调用失败，显示错误信息
+                document.querySelector('.weather-info').textContent = '天气信息获取失败';
+            });
+    }
 </script>
 
     <!-- 右侧面板 -->
@@ -806,7 +1028,7 @@
                 <c:when test="${sessionScope.user.username ne null}">
                     <div class="quick-item-card" onclick="window.location.href='${pageContext.request.contextPath}/document/form'">
                         <div class="quick-item-icon">📡</div>
-                        <div class="quick-item-text">起草文件</div>
+                        <div class="quick-item-text">发布文章</div>
                     </div>
                 </c:when>
                 <c:otherwise>

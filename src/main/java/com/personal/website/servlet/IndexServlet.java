@@ -2,6 +2,7 @@ package com.personal.website.servlet;
 
 import com.personal.website.pojo.Document;
 import com.personal.website.service.DocumentService;
+import com.personal.website.service.WeatherService;
 import com.personal.website.service.impl.DocumentServiceImpl;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -17,6 +18,7 @@ import java.util.List;
 public class IndexServlet extends HttpServlet {
 
     private DocumentService documentService = new DocumentServiceImpl();
+    private WeatherService weatherService = new WeatherService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -39,9 +41,6 @@ public class IndexServlet extends HttpServlet {
         int totalCount = documentService.getTotalCount();
         int totalPages = (int) Math.ceil((double) totalCount / pageSize);
 
-        // 添加调试信息
-        System.out.println("IndexServlet: Found " + documents.size() + " documents for page " + page);
-        System.out.println("IndexServlet: Total count is " + totalCount);
 
         request.setAttribute("documents", documents);
         request.setAttribute("currentPage", page);

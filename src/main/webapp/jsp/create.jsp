@@ -10,11 +10,9 @@
     
     // 调试输出，检查document对象是否存在
     Object documentObj = request.getAttribute("document");
-    System.out.println("create.jsp: document object is " + (documentObj != null ? "present" : "null"));
-    
+
     // 输出URL参数信息，用于调试
     String uuidParam = request.getParameter("uuid");
-    System.out.println("create.jsp: uuid parameter is " + uuidParam);
 %>
 <!DOCTYPE html>
 <html>
@@ -89,7 +87,7 @@
 </head>
 <body>
 <div class="container">
-    <h2>${document ne null ? "编辑文件" : "起草文件"}</h2>
+    <h2>${document ne null ? "编辑文章" : "起草文章"}</h2>
     <form id="documentForm" action="${pageContext.request.contextPath}/document/save" method="post">
         <input type="hidden" id="uuid" name="uuid" value="${document ne null ? document.uuid : ''}">
         <div class="form-row">

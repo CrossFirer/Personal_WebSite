@@ -42,7 +42,6 @@ public class DocumentServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String pathInfo = request.getPathInfo();
-        System.out.println("DocumentServlet.doGet called with pathInfo: " + pathInfo); // 调试输出
 
         switch (pathInfo) {
             case "/form":
@@ -59,7 +58,6 @@ public class DocumentServlet extends HttpServlet {
                 }
                 break;
             default:
-                System.out.println("Unknown pathInfo: " + pathInfo); // 调试输出
                 response.sendError(HttpServletResponse.SC_NOT_FOUND);
         }
 

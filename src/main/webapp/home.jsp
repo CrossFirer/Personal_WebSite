@@ -195,22 +195,22 @@
         }
 
         .quick-access-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            display: flex;
+            flex-direction: column;
             gap: 12px;
             margin-bottom: 20px;
         }
 
         .quick-item-card {
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
             padding: 12px;
             border-radius: 6px;
             background: #f8fafc;
             cursor: pointer;
             transition: all 0.3s ease;
-            text-align: center;
+            text-align: left;
         }
 
         .quick-item-card:hover {
@@ -220,7 +220,7 @@
         .quick-item-icon {
             width: 24px;
             height: 24px;
-            margin-bottom: 6px;
+            margin-right: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -435,14 +435,14 @@
     <div class="header-right">
         <div class="music-player">
             <span id="musicToggle" title="点击播放/暂停">🎵</span>
-            <span id="musicStatus">奢香夫人</span>
+            <span id="musicStatus">The Dawn</span>
             <div class="music-controls">
                 <button id="prevBtn" title="上一首" disabled>⏮</button>
                 <button id="playPauseBtn" title="播放/暂停">▶</button>
                 <button id="nextBtn" title="下一首" disabled>⏭</button>
             </div>
             <audio id="backgroundMusic" preload="auto" style="display: none;">
-                <source id="musicSource" src="${pageContext.request.contextPath}/music/奢香夫人.mp3" type="audio/mpeg">
+                <source id="musicSource" src="${pageContext.request.contextPath}/music/The Dawn.mp3" type="audio/mpeg">
                 您的浏览器不支持音频播放
             </audio>
         </div>
@@ -838,7 +838,7 @@
         
         // 更新音乐信息显示
         function updateMusicDisplay() {
-            musicStatus.textContent = "奢香夫人";
+            musicStatus.textContent = "The Dawn";
         }
         
         // 预加载音频文件
@@ -868,9 +868,9 @@
         // 备用路径尝试
         function fallbackToAlternativePaths() {
             const alternativePaths = [
-                `${pageContext.request.contextPath}/music/奢香夫人.mp3`,
-                `music/奢香夫人.mp3`,
-                `/music/奢香夫人.mp3`
+                `${pageContext.request.contextPath}/music/The Dawn.mp3`,
+                `music/The Dawn.mp3`,
+                `/music/The Dawn.mp3`
             ];
             
             let attempt = 0;
@@ -913,7 +913,7 @@
                     audio.play()
                         .then(() => {
                             playPauseBtn.textContent = '⏸'; // 暂停图标
-                            musicStatus.textContent = "奢香夫人 (播放中...)";
+                            musicStatus.textContent = "The Dawn (播放中...)";
                         })
                         .catch(e => {
                             console.error('播放失败:', e);
@@ -927,7 +927,7 @@
                 } else {
                     audio.pause();
                     playPauseBtn.textContent = '▶'; // 播放图标
-                    musicStatus.textContent = "奢香夫人 (已暂停)";
+                    musicStatus.textContent = "The Dawn (已暂停)";
                 }
             } else {
                 musicStatus.textContent = "音频尚未加载，请稍候...";
@@ -937,19 +937,19 @@
         // 监听音频播放事件
         audio.addEventListener('play', function() {
             playPauseBtn.textContent = '⏸';
-            musicStatus.textContent = "奢香夫人 (播放中...)";
+            musicStatus.textContent = "The Dawn (播放中...)";
         });
         
         // 监听音频暂停事件
         audio.addEventListener('pause', function() {
             playPauseBtn.textContent = '▶';
-            musicStatus.textContent = "奢香夫人 (已暂停)";
+            musicStatus.textContent = "The Dawn (已暂停)";
         });
         
         // 监听音频结束事件
         audio.addEventListener('ended', function() {
             playPauseBtn.textContent = '▶';
-            musicStatus.textContent = "奢香夫人 (播放完毕)";
+            musicStatus.textContent = "The Dawn (播放完毕)";
         });
         
         // 监听加载错误事件
@@ -1004,37 +1004,30 @@
     <div class="right-panel">
         <div class="section-title">快捷入口</div>
         <div class="quick-access-grid">
-            <div class="quick-item-card">
-                <div class="quick-item-icon">🏠</div>
-                <div class="quick-item-text">我的github</div>
+            <div class="quick-item-card" onclick="window.location.href='https://github.com/CrossFirer'">
+                <div class="quick-item-text">my github</div>
+            </div>
+            <div class="quick-item-card" onclick="window.location.href='https://www.baidu.com'">
+                <div class="quick-item-text">百度一下</div>
+            </div>
+            <div class="quick-item-card" onclick="window.location.href='https://www.google.com'">
+                <div class="quick-item-text">google</div>
             </div>
             <div class="quick-item-card">
-                <div class="quick-item-icon">🛒</div>
-                <div class="quick-item-text">商城中心</div>
+                <div class="quick-item-text">通知公告</div>
             </div>
             <div class="quick-item-card">
-                <div class="quick-item-icon">🤖</div>
-                <div class="quick-item-text">AI 大模型</div>
-            </div>
-            <div class="quick-item-card">
-                <div class="quick-item-icon">📊</div>
-                <div class="quick-item-text">ERP 系统</div>
-            </div>
-            <div class="quick-item-card">
-                <div class="quick-item-icon">🤝</div>
-                <div class="quick-item-text">CRM 系统</div>
+                <div class="quick-item-text">系统设置</div>
             </div>
             <c:choose>
                 <c:when test="${sessionScope.user.username ne null}">
                     <div class="quick-item-card" onclick="window.location.href='${pageContext.request.contextPath}/document/form'">
-                        <div class="quick-item-icon">📡</div>
                         <div class="quick-item-text">发布文章</div>
                     </div>
                 </c:when>
                 <c:otherwise>
                     <div class="quick-item-card" onclick="window.location.href='${pageContext.request.contextPath}/login'">
-                        <div class="quick-item-icon">📡</div>
-                        <div class="quick-item-text">登录起草</div>
+                        <div class="quick-item-text">发表文章</div>
                     </div>
                 </c:otherwise>
             </c:choose>
